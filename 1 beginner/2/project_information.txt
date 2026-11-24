@@ -1,0 +1,563 @@
+==========================================================
+CUSTOMER CHURN PREDICTION PROJECT
+Deep Learning with TensorFlow, Keras, and Streamlit
+==========================================================
+
+1. PROJECT TITLE
+----------------
+Customer Churn Prediction using Artificial Neural Networks
+
+This project predicts whether a telecom customer is likely to
+leave the service (churn) or remain a customer.
+
+The model estimates a churn probability for each customer.
+A decision threshold converts that probability into a final
+prediction:
+
+    Churn probability >= threshold  ->  Predict: Churn
+    Churn probability <  threshold  ->  Predict: No churn
+
+==========================================================
+
+2. BUSINESS PROBLEM
+-------------------
+Customer churn is a major problem for subscription-based
+businesses such as telecom companies. When a customer leaves,
+the company loses future revenue and must spend money to
+acquire a replacement customer.
+
+The goal of this project is to identify customers who are
+likely to churn so that the company can take early action,
+such as offering discounts, improving service, or contacting
+the customer with a retention offer.
+
+Business question:
+
+    Can we identify customers with a high risk of churn
+    before they leave?
+
+==========================================================
+
+3. DATASET
+----------
+Dataset name:
+    Telco Customer Churn Dataset
+
+Dataset source:
+    IBM Sample Data / Kaggle
+
+File used:
+    WA_Fn-UseC_-Telco-Customer-Churn.csv
+
+Dataset size:
+    7,043 customer records
+    21 columns
+
+Target variable:
+    Churn
+
+Target classes:
+    No  -> 0  (customer stayed)
+    Yes -> 1  (customer churned)
+
+Important columns:
+    customerID        Unique customer identifier
+    gender            Customer gender
+    SeniorCitizen     Whether the customer is a senior citizen
+    Partner           Whether the customer has a partner
+    Dependents        Whether the customer has dependents
+    tenure            Number of months with the company
+    PhoneService      Whether the customer has phone service
+    InternetService   Internet service type
+    Contract          Contract type
+    MonthlyCharges    Monthly bill amount
+    TotalCharges      Total amount charged
+    Churn             Target variable
+
+The dataset is imbalanced because there are more non-churners
+than churners. Therefore, accuracy alone is not enough to
+evaluate the model.
+
+==========================================================
+
+4. PROJECT OBJECTIVES
+---------------------
+The main objectives of this project are:
+
+1. Clean and prepare customer data for machine learning.
+2. Encode categorical features and scale numerical features.
+3. Build an Artificial Neural Network (ANN) using TensorFlow
+   and Keras.
+4. Train the model using binary cross-entropy loss.
+5. Select an appropriate classification threshold using
+   validation data.
+6. Evaluate the model using precision, recall, F1-score,
+   PR-AUC, and a confusion matrix.
+7. Compare the ANN with logistic regression and XGBoost.
+8. Save the trained model and preprocessing pipeline.
+9. Build a Streamlit frontend for single-customer and
+   batch predictions.
+
+==========================================================
+
+5. MACHINE LEARNING WORKFLOW
+----------------------------
+The project follows this workflow:
+
+    Load raw customer data
+                |
+                v
+    Remove customerID column
+                |
+                v
+    Convert TotalCharges to numeric
+                |
+                v
+    Handle missing TotalCharges values
+                |
+                v
+    Encode Churn target: No = 0, Yes = 1
+                |
+                v
+    Split data into train, validation, and test sets
+                |
+                v
+    Fit preprocessing only on training data
+                |
+                v
+    Train ANN, logistic regression, and XGBoost
+                |
+                v
+    Select decision threshold using validation data
+                |
+                v
+    Evaluate final models on test data
+                |
+                v
+    Save best model and build Streamlit frontend
+
+==========================================================
+
+6. DATA PREPROCESSING
+---------------------
+The following preprocessing steps were performed:
+
+1. Removed customerID because it is only an identifier and
+   does not describe customer behavior.
+
+2. Converted TotalCharges from text/object type to numeric
+   type using pd.to_numeric().
+
+3. Handled missing TotalCharges values. In this dataset,
+   missing values are commonly associated with customers who
+   have zero tenure. Therefore, missing TotalCharges values
+   were filled with 0.
+
+4. Converted the target variable:
+
+       No  -> 0
+       Yes -> 1
+
+5. Separated features (X) and target (y).
+
+6. Split the dataset into:
+
+       Training set:   60%
+       Validation set: 20%
+       Test set:       20%
+
+7. Used stratified splitting to preserve the churn/non-churn
+   class ratio in each set.
+
+8. Applied StandardScaler to numerical features.
+
+9. Applied OneHotEncoder to categorical features.
+
+Important rule:
+    The scaler and encoder were fitted only on the training
+    data. The validation and test sets were transformed using
+    the already-fitted preprocessing pipeline.
+
+This prevents data leakage.
+
+==========================================================
+
+7. DATA SPLITTING
+-----------------
+The data was divided into three parts:
+
+    Training set:
+        Used to fit preprocessing and train models.
+
+    Validation set:
+        Used to monitor ANN training and select the
+        classification threshold.
+
+    Test set:
+        Used only once for final evaluation.
+
+This approach prevents the test set from influencing model
+selection or threshold selection.
+
+==========================================================
+
+8. DEEP LEARNING MODEL
+----------------------
+An Artificial Neural Network (ANN) was built using Keras.
+
+Model architecture:
+
+    Input layer
+        |
+        v
+    Dense layer: 64 neurons, ReLU activation
+        |
+        v
+    Dropout layer: 30%
+        |
+        v
+    Dense layer: 32 neurons, ReLU activation
+        |
+        v
+    Dropout layer: 20%
+        |
+        v
+    Dense layer: 1 neuron, sigmoid activation
+
+Output:
+    A single probability between 0 and 1.
+
+Example:
+    0.83 means the model estimates an 83% chance that the
+    customer will churn.
+
+The final Dense layer uses sigmoid activation because this is
+a binary classification problem.
+
+==========================================================
+
+9. MODEL COMPILATION
+--------------------
+The ANN was compiled using:
+
+    Loss:
+        binary_crossentropy
+
+    Optimizer:
+        Adam
+
+    Metrics:
+        accuracy
+        precision
+        recall
+        PR-AUC
+
+Binary cross-entropy is suitable for binary classification
+when the model outputs probabilities.
+
+The optimizer updates the model weights and biases to reduce
+the loss during training.
+
+==========================================================
+
+10. TRAINING PROCESS
+--------------------
+The ANN was trained using:
+
+    Training data
+    Validation data
+    Batch size: 32
+    Maximum epochs: 100
+    Early stopping
+
+Training workflow:
+
+    Take a batch of 32 customers
+            |
+            v
+    Predict churn probabilities
+            |
+            v
+    Calculate binary cross-entropy loss
+            |
+            v
+    Compute gradients using backpropagation
+            |
+            v
+    Update weights and biases using Adam
+            |
+            v
+    Repeat until the epoch ends
+
+Early stopping was used to stop training when validation loss
+stopped improving. The best weights were restored after
+training.
+
+==========================================================
+
+11. DECISION THRESHOLD
+----------------------
+By default, a model may predict churn when the probability is
+at least 0.5.
+
+However, the best threshold depends on the business goal.
+
+    Lower threshold:
+        More customers are predicted as churners.
+        Higher recall.
+        More false positives.
+
+    Higher threshold:
+        Fewer customers are predicted as churners.
+        Higher precision.
+        More false negatives.
+
+In this project, the threshold was selected using validation
+data by testing thresholds from 0.10 to 0.90 and choosing the
+threshold with the highest F1-score.
+
+The selected threshold was then used for final test-set
+evaluation.
+
+==========================================================
+
+12. MODEL EVALUATION
+--------------------
+The following metrics were used:
+
+Accuracy:
+    The percentage of all customers classified correctly.
+
+Precision:
+    Of all customers predicted as churners, how many actually
+    churned?
+
+Recall:
+    Of all customers who actually churned, how many did the
+    model detect?
+
+F1-score:
+    Balance between precision and recall.
+
+PR-AUC:
+    Measures how well the model ranks churners above
+    non-churners. It is useful for imbalanced datasets.
+
+Confusion matrix:
+    Shows correct and incorrect predictions for each class.
+
+Error types:
+
+    False positive:
+        Model predicts churn, but the customer stays.
+
+    False negative:
+        Model predicts no churn, but the customer churns.
+
+For churn prevention, false negatives can be costly because
+the company misses an opportunity to retain a customer.
+
+==========================================================
+
+13. MODEL COMPARISON
+--------------------
+Three models were compared:
+
+1. Artificial Neural Network (ANN)
+2. Logistic Regression
+3. XGBoost Classifier
+
+All models used the same training data, validation data, test
+data, preprocessing pipeline, and decision threshold.
+
+The purpose of the comparison was to determine whether the
+neural network adds value over classical machine-learning
+models.
+
+Important note:
+    Deep learning does not always outperform classical machine
+    learning. For small, structured tabular datasets, XGBoost
+    and logistic regression can be very strong baselines.
+
+==========================================================
+
+14. STREAMLIT FRONTEND
+----------------------
+A Streamlit web application was created to make the trained
+model easy to use.
+
+The app allows the user to:
+
+1. Enter customer details manually.
+2. Predict churn probability for one customer.
+3. View the predicted class: Churn or No churn.
+4. View the churn probability.
+5. Adjust the decision threshold.
+6. Upload a CSV file for batch prediction.
+7. Download predictions as a CSV file.
+
+App workflow:
+
+    User enters customer details
+                |
+                v
+    Streamlit collects input
+                |
+                v
+    Saved preprocessor transforms the input
+                |
+                v
+    Saved ANN predicts churn probability
+                |
+                v
+    Probability is compared with threshold
+                |
+                v
+    App displays prediction and probability
+
+Files required by the app:
+
+    churn_app.py
+    churn_ann_model.keras
+    churn_preprocessor.joblib
+    churn_best_threshold.joblib
+
+Run command:
+
+    streamlit run churn_app.py
+
+==========================================================
+
+15. PROJECT FILES
+-----------------
+    churn_notebook.ipynb
+        Main Jupyter Notebook containing data cleaning,
+        model training, evaluation, and comparison.
+
+    churn_app.py
+        Streamlit frontend application.
+
+    churn_ann_model.keras
+        Saved trained ANN model.
+
+    churn_preprocessor.joblib
+        Saved scaler and one-hot encoder pipeline.
+
+    churn_best_threshold.joblib
+        Saved decision threshold selected on validation data.
+
+    WA_Fn-UseC_-Telco-Customer-Churn.csv
+        Original customer churn dataset.
+
+==========================================================
+
+16. HOW TO RUN THE PROJECT
+--------------------------
+1. Install required libraries:
+
+       pip install tensorflow scikit-learn xgboost pandas
+       numpy matplotlib seaborn streamlit joblib
+
+2. Open the Jupyter Notebook:
+
+       churn_notebook.ipynb
+
+3. Run all cells from top to bottom.
+
+4. Train the ANN and save:
+
+       churn_ann_model.keras
+       churn_preprocessor.joblib
+       churn_best_threshold.joblib
+
+5. Run the Streamlit app:
+
+       streamlit run churn_app.py
+
+6. Open the local URL shown in the terminal, usually:
+
+       http://localhost:8501
+
+==========================================================
+
+17. PROJECT RESULTS
+-------------------
+Add your actual results after running the project.
+
+Example format:
+
+    ANN test accuracy:
+    ANN test precision:
+    ANN test recall:
+    ANN test F1-score:
+    ANN test PR-AUC:
+
+    Logistic regression test accuracy:
+    Logistic regression test F1-score:
+
+    XGBoost test accuracy:
+    XGBoost test F1-score:
+
+    Best model:
+    Best threshold:
+    Best PR-AUC:
+
+Do not write results before running the final test-set
+evaluation.
+
+==========================================================
+
+18. KEY LEARNINGS
+-----------------
+This project demonstrates the complete deep-learning workflow:
+
+    Data cleaning
+    Feature preprocessing
+    Train/validation/test splitting
+    Neural-network building
+    Model training
+    Backpropagation
+    Dropout regularization
+    Early stopping
+    Threshold selection
+    Model evaluation
+    Model comparison
+    Model saving
+    Frontend deployment
+
+The special part of this project is not only prediction.
+It is learning how to build, train, evaluate, save, and deploy
+a neural-network model using TensorFlow and Keras.
+
+==========================================================
+
+19. LIMITATIONS
+----------------
+1. The dataset is a snapshot, so the model predicts churn risk
+   based on available historical features. It does not
+   guarantee that a customer will churn.
+
+2. The dataset is imbalanced, so accuracy alone can be
+   misleading.
+
+3. The ANN may not outperform XGBoost on this tabular dataset.
+
+4. The model should be retrained periodically when new customer
+   data becomes available.
+
+5. The Streamlit app should use the same preprocessing pipeline
+   and feature names used during training.
+
+==========================================================
+
+20. FUTURE IMPROVEMENTS
+-----------------------
+1. Perform hyperparameter tuning using KerasTuner.
+2. Add feature engineering, such as charge-per-month or
+   tenure groups.
+3. Use SHAP or permutation importance to explain predictions.
+4. Test different ANN architectures and dropout rates.
+5. Use class weights or resampling techniques.
+6. Deploy the app using Streamlit Cloud, Hugging Face Spaces,
+   or a cloud platform.
+7. Monitor model performance after deployment.
